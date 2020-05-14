@@ -39,30 +39,33 @@ if __name__ == '__main__':
     # rename  3x3相机
     a, b = (3, 3)
 
-    for img_folder in os.listdir('pics'):
-        temp_num = -1
-        img_name = glob.glob('pics/' + img_folder + '/' + '*.bmp')
-        img_name.sort()
+    for root, dirs, files in os.walk("pics", topdown=False):
+        if files:
+            img_folder = root.replace('pics\\', '', 1)
+            temp_num = -1
+            img_name = glob.glob('pics/' + img_folder + '/' + '*.bmp')
+            img_name.sort()
+            if len(img_name) != a * b:
+                continue
+            folder_save = 'result/' + img_folder
+            # os.system('mkdir ' + img_folder + folder_save)
+            if not os.path.exists(folder_save):
+                os.makedirs(folder_save)
 
-        folder_save = 'result/' + img_folder
-        # os.system('mkdir ' + img_folder + folder_save)
-        if not os.path.exists(folder_save):
-            os.makedirs(folder_save)
+            for array_path, img_path in zip(array_name, img_name):
+                temp_num += 1
+                calibrate_array = np.load(array_path)
+                temp_img = cv_imread(img_path)
 
-        for array_path, img_path in zip(array_name, img_name):
-            temp_num += 1
-            calibrate_array = np.load(array_path)
-            temp_img = cv_imread(img_path)
+                if (temp_img is not None) and (calibrate_array is not None):
+                    im_result = cv2.warpPerspective(temp_img, calibrate_array, temp_img.shape[1::-1])
+                    # [x, y] = im_result.shape[:2]
+                    # im_result = im_result[int(x * 0.2):int(x * 0.8), int(y * 0.15):int(y * 0.85), :]
+                    save_name = str(temp_num//a + 1) + '-' + str(temp_num % a + 1)
+                    cv_imwrite(folder_save + '/' + save_name + '.bmp', im_result)
+                else:
+                    print(img_path + ' is fail;')
 
-            if (temp_img is not None) and (calibrate_array is not None):
-                im_result = cv2.warpPerspective(temp_img, calibrate_array, temp_img.shape[1::-1])
-                # [x, y] = im_result.shape[:2]
-                # im_result = im_result[int(x * 0.2):int(x * 0.8), int(y * 0.15):int(y * 0.85), :]
-                save_name = str(temp_num//a + 1) + '-' + str(temp_num % a + 1)
-                cv_imwrite(folder_save + '/' + save_name + '.bmp', im_result)
-            else:
-                print(img_path + ' is fail;')
-
-            img = None
-            array = None
+                img = None
+                array = None
 
